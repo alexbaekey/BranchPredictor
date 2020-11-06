@@ -103,30 +103,32 @@ void smith2(int branchPC, char outcome){
 /*          printf("countArr %d, %d\n", j, countArr[j]);*/
 /*     }*/
      predictions++;
-     printf("branchPC: %d\n", branchPC);
-     printf("outcome: %c\n", outcome);
+/*     printf("branchPC: %d\n", branchPC);*/
+/*     printf("outcome: %c\n", outcome);*/
 /*     printf("value of cur: %d\n", cur);*/
 /*     printf("count array: %d\n", countArr[0]);*/
 /*     printf("counternum %d\n", countArr[cur]);*/
-     int mid = (int)(pow(2,(float)B)/2.);
-     int max = (int)(pow(2,(float)B));
-     //TODO CHECK THESE CONDITIONS
-     if(count<mid){
+     int mid = (int)pow(2,(float)B)/2.;
+     int max = (int)pow(2,(float)B);
+     printf("count: %i\n", count);
+/*     //TODO CHECK THESE CONDITIONS*/
+     if(count < (int)mid){
           //predicted not taken
           if(outcome == 't'){
                mispredictions++;
                //updatecounter
                if(count<(max-1)){
-                    count = count + 1;
+                    count++;
                }
           }
+    
           if(outcome == 'n'){
                if(count>0){
-                    count = count - 1;
+                    count--;
                }
           }
      }
-     if(count>=mid){
+     else if(count >= (int)mid){
           //predicted taken
           if(outcome == 'n'){
                mispredictions++;
@@ -214,7 +216,7 @@ void main(int argc, char *argv[]){
 /*          }*/
           fp = fopen(trace, "r");
           while(!feof(fp)){   
-               fscanf(fp, "%x\n %c", &branchPC, &outcome);
+               fscanf(fp, "%x %c\n", &branchPC, &outcome);
                smith2(branchPC, outcome); 
           }  
           fclose(fp);
