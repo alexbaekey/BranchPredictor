@@ -45,40 +45,57 @@ void predict(int branchPC, char outcome){
 void smith(int branchPC, char outcome){
 
 /*     for(int j=0;j<1024;j++){*/
-/*          printf("countArr %d, %d", j, countArr[j]);*/
+/*          printf("countArr %d, %d\n", j, countArr[j]);*/
 /*     }*/
      predictions++;
-     printf("branchPC: %d\n", branchPC);
-     printf("outcome: %c\n", outcome);
+/*     printf("branchPC: %d\n", branchPC);*/
+/*     printf("outcome: %c\n", outcome);*/
      int cur = branchPC % 1024;
-     printf("value of cur: %d\n", cur);
-     printf("count array: %d\n", countArr[0]);
-     printf("counternum %d\n", countArr[cur]);
+/*     printf("value of cur: %d\n", cur);*/
+/*     printf("count array: %d\n", countArr[0]);*/
+/*     printf("counternum %d\n", countArr[cur]);*/
+     int mid = (int)(pow(2,(float)B)/2.);
+     int max = (int)(pow(2,(float)B));
      //TODO CHECK THESE CONDITIONS
-     if(countArr[cur]<(int)(pow(2,B)/2)){
-          taken = false;
-/*          if(strcmp("T",outcome)==0){*/
-/*               mispredictions++;*/
-/*          }*/
+     if(countArr[cur]<mid){
+          //predicted not taken
+          if(outcome == 't'){
+               mispredictions++;
+               //updatecounter
+               if(countArr[cur]<(max-1)){
+                    countArr[cur] = countArr[cur] + 1;
+               }
+          }
+          if(outcome == 'n'){
+               if(countArr[cur]>0){
+                    countArr[cur] = countArr[cur] - 1;
+               }
+          }
+
+
      }
 
-/*     if(countArr[cur]>=(int)(pow(2,B)/2)){*/
-/*          taken = true;*/
-/*          if(strcmp("N",outcome)==0){*/
-/*               mispredictions++;*/
-/*          }*/
-/*     }*/
+     if(countArr[cur]>=mid){
+          //predicted taken
+          if(outcome == 'n'){
+               mispredictions++;
+               //updatecounter
+               if(countArr[cur]>0){
+                    countArr[cur] = countArr[cur] - 1;
+               }
+          }
+          if(outcome == 't'){
+               //updatecounter
+               if(countArr[cur]<(max-1)){
+                    countArr[cur] = countArr[cur] + 1;
+               }
+          }
+     }
 
-/*     //update counter*/
-/*     if(taken==true){*/
-/*          if(countArr[cur]<(int)(pow(2,B)))*/
-/*               countArr[cur]++;*/
-/*     }*/
-/*     else{*/
-/*          if(countArr[cur]>0)*/
-/*     countArr[cur]--;*/
-/*     }*/
 }
+
+
+
 
 
 // main execution
@@ -98,7 +115,7 @@ void main(int argc, char *argv[]){
 
      char *trace;
      char *predictor;
-     char *taken;
+
      
 
      //read in type of branch predictor, loop through file
@@ -111,9 +128,10 @@ void main(int argc, char *argv[]){
           //TODO JUST CAUSE IDK WHAT SIZE TO MAKE THIS ARRAY
           //
           countArr = (int *)malloc(sizeof(int)*1024);
+          int x = (int)(pow(2,(float)B)/2.);
           for(int i=0; i<1024; i++){
                //NOT SURE IF RIGHT START VALUE  ROUND DOWN? //TODO
-               countArr[i] = 0;
+               countArr[i] = x;
           }
           fp = fopen(trace, "r");
           while(!feof(fp)){   
@@ -160,6 +178,9 @@ void main(int argc, char *argv[]){
           printf("%s is not a valid predictor type\n", predictor);
         
 
+     //RESULTS
+     printf("Number of predictions: %d\n", predictions);
+     printf("Number of mispredictions: %d\n", mispredictions);
 
 
 /*//not sure if necessary*/
