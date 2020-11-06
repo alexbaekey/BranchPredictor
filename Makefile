@@ -1,14 +1,14 @@
 CC = gcc
-OPT = -O3
-#OPT = -g
+#OPT = -O3
+OPT = -g
 WARN = -Wall
 CFLAGS = $(OPT) $(WARN) $(INC) $(LIB)
 
 # List all your .cc files here (source files, excluding header files)
-SIM_SRC = nbitbranch.c
+SIM_SRC = branch.c
 
 # List corresponding compiled object files here (.o files)
-SIM_OBJ = nbitbranch.o
+SIM_OBJ = branch.o
  
 #################################
 
@@ -20,7 +20,7 @@ all: sim
 
 # rule for making sim_cache
 
-sim_cache: $(SIM_OBJ)
+sim: $(SIM_OBJ)
 	$(CC) -o sim $(CFLAGS) $(SIM_OBJ) -lm
 	@echo "-----------DONE WITH SIM_CACHE-----------"
 
