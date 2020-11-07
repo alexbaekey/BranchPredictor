@@ -20,13 +20,16 @@ int B, M2, M1, N, K;
 int count;
 
 int *bimodPT;
-int bimodsize;
+int bisize;
 
 int *PT;
 int gsize;
 int *gbh;
 int binsum = 0;
 bool taken = false;
+
+int *chooser;
+int hybsize;
 
 //Evaluation Metrics
 int mispredictions=0;
@@ -36,7 +39,7 @@ int speedup;
 
 //functions
 void smith(int branchPC, char outcome);
-void bimodal(int branchPC, char outcome, int M2, int bisize);
+void bimodal(int branchPC, char outcome, int M2);
 void gshare(int branchPC, char outcome, int M1, int N);
 void hybrid(int branchPC, char outcome, int K, int M1, int N, int M2);
 int binArr2num(int *gbh, int N);
@@ -81,7 +84,7 @@ void smith(int branchPC, char outcome){
 }
 
 
-void bimodal(int branchPC, char outcome, int M2, int bisize){
+void bimodal(int branchPC, char outcome, int M2){
 
      predictions++;
      //use bits M+1 to 2 of PC
@@ -126,7 +129,6 @@ void gshare(int branchPC, char outcome, int M1, int N){
      predictions++;
      //use bits M+1 to 2 of PC
      int test = binArr2num(gbh, N);
-     printf("test %d\n", test);
      int cur = (test ^ (((1<<(M1))-1) & (branchPC>>(2))));
      //printf("cur %d\n", cur);
      int mid = 4;
@@ -167,11 +169,12 @@ void gshare(int branchPC, char outcome, int M1, int N){
           }
      }
 
+//for testing
+/*     printf("\nbefore\n");*/
+/*     for(int i=0;i<N;i++){*/
+/*          printf("gbh of %d: %d\n", i, gbh[i]);*/
+/*     }*/
 
-     printf("\nbefore\n");
-     for(int i=0;i<N;i++){
-          printf("gbh of %d: %d\n", i, gbh[i]);
-     }
 /*     //update global hist*/
      //1st shift bits right one
      //have to do this descending, otherwise new values spill over
@@ -187,10 +190,11 @@ void gshare(int branchPC, char outcome, int M1, int N){
           gbh[0]=0;
      }
 
-     printf("after\n");
-     for(int i=0;i<N;i++){
-          printf("gbh of %d: %d\n", i, gbh[i]);
-     }
+//for testing
+/*     printf("after\n");*/
+/*     for(int i=0;i<N;i++){*/
+/*          printf("gbh of %d: %d\n", i, gbh[i]);*/
+/*     }*/
 
 }
 
@@ -205,6 +209,9 @@ int binArr2num(int *gbh, int N){
 }
 
 void hybrid(int branchPC, char outcome, int K, int M1, int N, int M2){
+
+     bimodal(branchPC, outcome, M2);   
+     
 ;
 }
 
@@ -246,8 +253,7 @@ void main(int argc, char *argv[]){
      else if(strcmp("bimodal", predictor) == 0){
           M2 = strtol(argv[2], NULL, 10);
           trace = argv[3];
-          int bisize = (int)(pow(2,(float)M2));
-          bimodsize = bisize;
+          bisize = (int)(pow(2,(float)M2));
           bimodPT = (int *)malloc(sizeof(int)*bisize);
           for(int i=0; i<bisize; i++){
                bimodPT[i] = 4;
@@ -255,7 +261,7 @@ void main(int argc, char *argv[]){
           fp = fopen(trace, "r");
           while(!feof(fp)){   
                fscanf(fp, "%x %c\n", &branchPC, &outcome);
-               bimodal(branchPC, outcome, M2, bisize);   
+               bimodal(branchPC, outcome, M2);   
           }  
           fclose(fp);
           printf("COMMAND\n");
@@ -267,8 +273,7 @@ void main(int argc, char *argv[]){
           N = strtol(argv[3], NULL, 10);
           trace = argv[4];
           gbh = (int *)malloc(sizeof(int)*N);
-          int bisize = (int)(pow(2,(float)M1));
-          gsize = bisize;
+          gsize = (int)(pow(2,(float)M1));
           PT = (int *)malloc(sizeof(int)*gsize);
           for(int i=0;i<N;i++){
                gbh[i]=0;
@@ -292,20 +297,13 @@ void main(int argc, char *argv[]){
           N = strtol(argv[4], NULL, 10);
           M2 = strtol(argv[5], NULL, 10);
           trace = argv[6];
-          int bisize = (int)(pow(2,(float)M2));
-          bimodsize = bisize;
+          bisize = (int)(pow(2,(float)M2));
           bimodPT = (int *)malloc(sizeof(int)*bisize);
           for(int i=0; i<bisize; i++){
                bimodPT[i] = 4;
           }
-          fp = fopen(trace, "r");
-          while(!feof(fp)){   
-               fscanf(fp, "%x %c\n", &branchPC, &outcome);
-               bimodal(branchPC, outcome, M2, bisize);   
-          }  
           gbh = (int *)malloc(sizeof(int)*N);
-          int bisize = (int)(pow(2,(float)M1));
-          gsize = bisize;
+          gsize = (int)(pow(2,(float)M1));
           PT = (int *)malloc(sizeof(int)*gsize);
           for(int i=0;i<N;i++){
                gbh[i]=0;
@@ -316,12 +314,12 @@ void main(int argc, char *argv[]){
           int hybsize = pow(2,K);
           chooser = (int *)malloc(sizeof(int)*(hybsize));
           for(int i=0;i<hybsize;i++){
-               
+               chooser[i]=1;
           }
           fp = fopen(trace, "r");
           while(!feof(fp)){   
                fscanf(fp, "%x %c\n", &branchPC, &outcome);
-               hybrid(branchPC, outcome);   
+               hybrid(branchPC, outcome, K, M1, N, M2);   
           }  
           fclose(fp);
           
@@ -337,15 +335,15 @@ void main(int argc, char *argv[]){
 
      if(strcmp("bimodal", predictor) == 0){
           printf("FINAL BIMODAL CONTENTS\n");
-          for(int i=0;i<bimodsize;i++){
+          for(int i=0;i<bisize;i++){
                printf("%d %d\n",i, bimodPT[i]);
           }
      }
 
      if(strcmp("gshare", predictor) == 0){
           printf("FINAL GSHARE CONTENTS\n");
-          for(int i=0;i<bimodsize;i++){
-               printf("%d %d\n",i, bimodPT[i]);
+          for(int i=0;i<gsize;i++){
+               printf("%d %d\n",i, PT[i]);
           }
      }
 
