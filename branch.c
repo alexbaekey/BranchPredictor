@@ -10,108 +10,36 @@
 #include<math.h>
 #include<string.h>
 
-//counter
+//global counters & flags
 int *countArr;
-bool taken=false;
-int mispredictions=0;
-int predictions=0;
 int B, M2, M1, N, K;
 
 int count;
-
 int *bimodPT;
+int bimodsize;
+
+int *gbh;
+int binsum = 0;
+bool taken = false;
+
 //Evaluation Metrics
+int mispredictions=0;
+int predictions=0;
 int CPI;
 int speedup;
 
-int bimodsize;
-
-// hazards?
-     // data
-     // structural
-     // control
-
 //functions
 void smith(int branchPC, char outcome);
-void predict(int branchPC, char outcome);
 void bimodal(int branchPC, char outcome, int M2, int bisize);
-
-
-
-void predict(int branchPC, char outcome){
-/*     printf("Wow you did it good job\n");*/
-/*     printf("size of array: %ld\n", sizeof(countArr));*/
-/*     printf("size of array: %ld\n", sizeof(countArr[0]));*/
-     for(int i=0;i<1024;i++){
-          printf("count %d\n",countArr[i]);
-     }
-}
+void gshare(int branchPC, char outcome, int M1, int N);
+void hybrid();
+int binArr2num(int *gbh, int N);
 
 void smith(int branchPC, char outcome){
 
-/*     for(int j=0;j<1024;j++){*/
-/*          printf("countArr %d, %d\n", j, countArr[j]);*/
-/*     }*/
      predictions++;
-/*     printf("branchPC: %d\n", branchPC);*/
-/*     printf("outcome: %c\n", outcome);*/
-     int cur = branchPC % 1024;
-/*     printf("value of cur: %d\n", cur);*/
-/*     printf("count array: %d\n", countArr[0]);*/
-/*     printf("counternum %d\n", countArr[cur]);*/
-     int mid = (int)(pow(2,(float)B)/2.);
-     int max = (int)(pow(2,(float)B));
-     //TODO CHECK THESE CONDITIONS
-     if(countArr[cur]<mid){
-          //predicted not taken
-          if(outcome == 't'){
-               mispredictions++;
-               //updatecounter
-               if(countArr[cur]<(max-1)){
-                    countArr[cur] = countArr[cur] + 1;
-               }
-          }
-          if(outcome == 'n'){
-               if(countArr[cur]>0){
-                    countArr[cur] = countArr[cur] - 1;
-               }
-          }
-     }
-     if(countArr[cur]>=mid){
-          //predicted taken
-          if(outcome == 'n'){
-               mispredictions++;
-               //updatecounter
-               if(countArr[cur]>0){
-                    countArr[cur] = countArr[cur] - 1;
-               }
-          }
-          if(outcome == 't'){
-               //updatecounter
-               if(countArr[cur]<(max-1)){
-                    countArr[cur] = countArr[cur] + 1;
-               }
-          }
-     }
-}
-
-
-
-void smith2(int branchPC, char outcome){
-
-/*     for(int j=0;j<1024;j++){*/
-/*          printf("countArr %d, %d\n", j, countArr[j]);*/
-/*     }*/
-     predictions++;
-/*     printf("branchPC: %d\n", branchPC);*/
-/*     printf("outcome: %c\n", outcome);*/
-/*     printf("value of cur: %d\n", cur);*/
-/*     printf("count array: %d\n", countArr[0]);*/
-/*     printf("counternum %d\n", countArr[cur]);*/
      int mid = (int)pow(2,(float)B)/2.;
      int max = (int)pow(2,(float)B);
-     printf("count: %i\n", count);
-/*     //TODO CHECK THESE CONDITIONS*/
      if(count < (int)mid){
           //predicted not taken
           if(outcome == 't'){
@@ -154,7 +82,6 @@ void bimodal(int branchPC, char outcome, int M2, int bisize){
      int cur = (((1<<(M2))-1) & (branchPC>>(2)));
      int mid = 4;
      int max = 8;
-     printf("cur: %d\n", cur);
      if(bimodPT[cur]<mid){
           //predicted not taken
           if(outcome == 't'){
@@ -170,7 +97,7 @@ void bimodal(int branchPC, char outcome, int M2, int bisize){
                }
           }
      }
-     if(bimodPT[cur]>=mid){
+     else if(bimodPT[cur]>=mid){
           //predicted taken
           if(outcome == 'n'){
                mispredictions++;
@@ -188,6 +115,80 @@ void bimodal(int branchPC, char outcome, int M2, int bisize){
      }
 }
 
+void gshare(int branchPC, char outcome, int M1, int N){
+     
+     predictions++;
+     //use bits M+1 to 2 of PC
+     int test = binArr2num(gbh, N);
+     printf("test %d\n", test);
+     int cur = (((1<<(M1))-1) & (branchPC>>(2))) ^ binArr2num(gbh, N);
+     printf("cur %d\n", cur);
+     int mid = 4;
+     int max = 8;
+     if(bimodPT[cur]<mid){
+          //predicted not taken
+          if(outcome == 't'){
+               mispredictions++;
+               //updatecounter
+               if(bimodPT[cur]<(max-1)){
+                    bimodPT[cur] = bimodPT[cur] + 1;
+               }
+               taken = true;
+          }
+          if(outcome == 'n'){
+               if(bimodPT[cur]>0){
+                    bimodPT[cur] = bimodPT[cur] - 1;
+               }
+               taken = false;
+          }
+     }
+     else if(bimodPT[cur]>=mid){
+          //predicted taken
+          if(outcome == 'n'){
+               mispredictions++;
+               //updatecounter
+               if(bimodPT[cur]>0){
+                    bimodPT[cur] = bimodPT[cur] - 1;
+               }
+               taken = false;
+          }
+          if(outcome == 't'){
+               //updatecounter
+               if(bimodPT[cur]<(max-1)){
+                    bimodPT[cur] = bimodPT[cur] + 1;
+               }
+               taken = true;
+          }
+     }
+
+/*     //update global hist*/
+     //1st shift bits right one
+     for(int i=0;i<N-1;i++){
+          gbh[i]=gbh[i+1];
+     }
+/*     //place result value in MSB*/
+     if(taken==true){
+          gbh[0]=1;
+     }
+     else if(taken==false){
+          gbh[0]=0;
+     }
+
+}
+
+int binArr2num(int *gbh, int N){
+     binsum=0;
+     int m=0;
+     for(int i=(N-1);i>=0;i--){
+          binsum = binsum + ((1<<m)*gbh[i]);
+          m++;
+     }
+     return binsum;
+}
+
+void hybrid(){
+;
+}
 
 // main execution
 
@@ -217,9 +218,12 @@ void main(int argc, char *argv[]){
           fp = fopen(trace, "r");
           while(!feof(fp)){   
                fscanf(fp, "%x %c\n", &branchPC, &outcome);
-               smith2(branchPC, outcome); 
+               smith(branchPC, outcome); 
           }  
           fclose(fp);
+          printf("COMMAND\n");
+          printf("./sim %s %d %s\n", predictor, B, trace);
+          printf("OUTPUT\n");
      }
      else if(strcmp("bimodal", predictor) == 0){
           M2 = strtol(argv[2], NULL, 10);
@@ -232,21 +236,34 @@ void main(int argc, char *argv[]){
           }
           fp = fopen(trace, "r");
           while(!feof(fp)){   
-               fscanf(fp, "%x\n %c", &branchPC, &outcome);
+               fscanf(fp, "%x %c\n", &branchPC, &outcome);
                bimodal(branchPC, outcome, M2, bisize);   
           }  
           fclose(fp);
+          printf("COMMAND\n");
+          printf("./sim %s %d %s\n", predictor, M2, trace);
+          printf("OUTPUT\n");
      }
      else if(strcmp("gshare", predictor) == 0){
           M1 = strtol(argv[2], NULL, 10);
           N = strtol(argv[3], NULL, 10);
           trace = argv[4];
+          gbh = (int *)malloc(sizeof(int)*N);
+          int bisize = (int)(pow(2,(float)M1));
+          bimodsize = bisize;
+          bimodPT = (int *)malloc(sizeof(int)*bisize);
+          for(int i=0;i<N;i++){
+               gbh[i]=0;
+          }
           fp = fopen(trace, "r");
           while(!feof(fp)){   
-               fscanf(fp, "%x\n %c", &branchPC, &outcome);
-               predict(branchPC, outcome);   
+               fscanf(fp, "%x %c\n", &branchPC, &outcome);
+               gshare(branchPC, outcome, M1, N);   
           }  
           fclose(fp);
+          printf("COMMAND\n");
+          printf("./sim %s %d %d %s\n", predictor, M1, N, trace);
+          printf("OUTPUT\n");
      }
      else if(strcmp("hybrid", predictor) == 0){
           K = strtol(argv[2], NULL, 10);
@@ -256,24 +273,35 @@ void main(int argc, char *argv[]){
           trace = argv[6];
           fp = fopen(trace, "r");
           while(!feof(fp)){   
-               fscanf(fp, "%x\n %c", &branchPC, &outcome);
-               predict(branchPC, outcome);   
+               fscanf(fp, "%x %c\n", &branchPC, &outcome);
+               hybrid(branchPC, outcome);   
           }  
           fclose(fp);
+          
      }
      else
           printf("%s is not a valid predictor type\n", predictor);
         
 
      //RESULTS
-     printf("Number of predictions: %d\n", predictions);
-     printf("Number of mispredictions: %d\n", mispredictions);
+     printf("number of predictions: %d\n", predictions);
+     printf("number of mispredictions: %d\n", mispredictions);
+     printf("misprediction rate: %.2f%%\n", (100*(double)mispredictions/(double)predictions));
 
      if(strcmp("bimodal", predictor) == 0){
+          printf("FINAL BIMODAL CONTENTS\n");
           for(int i=0;i<bimodsize;i++){
                printf("%d %d\n",i, bimodPT[i]);
           }
      }
+
+     if(strcmp("gshare", predictor) == 0){
+          printf("FINAL GSHARE CONTENTS\n");
+          for(int i=0;i<bimodsize;i++){
+               printf("%d %d\n",i, bimodPT[i]);
+          }
+     }
+
 
 /*//not sure if necessary*/
 /*     //firstline?*/
