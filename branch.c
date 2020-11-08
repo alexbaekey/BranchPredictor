@@ -30,6 +30,10 @@ bool taken = false;
 
 int *chooser;
 int hybsize;
+int gpred;
+int bipred;
+int bicorrect;
+int gcorrect;
 
 //Evaluation Metrics
 int mispredictions=0;
@@ -210,9 +214,178 @@ int binArr2num(int *gbh, int N){
 
 void hybrid(int branchPC, char outcome, int K, int M1, int N, int M2){
 
-     bimodal(branchPC, outcome, M2);   
-     
-;
+     predictions++;
+
+     //gshare with modification
+
+     //use bits M+1 to 2 of PC
+     int test = binArr2num(gbh, N);
+     int gcur = (test ^ (((1<<(M1))-1) & (branchPC>>(2))));
+     int mid = 4;
+     int max = 8;
+     if(PT[gcur]<mid){
+          gpred = 0;
+          //predicted not taken
+          if(outcome == 't'){
+               gcorrect=0;
+               taken = true;
+          }
+          else if(outcome=='n'){
+               gcorrect=1;
+               taken=false;
+          }
+     }
+     else if(PT[gcur]>=mid){
+          gpred = 1;
+          //predicted taken
+          if(outcome == 't'){
+               gcorrect=1;
+               taken=true;
+          }
+          else if(outcome=='n'){
+               gcorrect=0;
+               taken=false;
+          }
+     }
+
+
+     //bimodal with modification
+
+     //use bits M+1 to 2 of PC
+     int cur = (((1<<(M2))-1) & (branchPC>>(2)));
+     if(bimodPT[cur]<mid){
+          bipred = 0;
+          if(outcome == 't'){
+               bicorrect=0;
+          }
+          else if(outcome=='n'){
+               bicorrect=1;
+          }
+     }
+     else if(bimodPT[cur]>=mid){
+          bipred=1;
+          if(outcome == 't'){
+               bicorrect=1;
+          }
+          else if(outcome=='n'){
+               bicorrect=0;
+          }
+     }
+
+     //find index value using bits k+1 to 2 in branchPC
+     int ccur = (((1<<(K))-1) & (branchPC>>(2)));
+
+     //gpred and bipred create the table
+     if(chooser[ccur]<2){
+          //bimodal predictor chosen
+          if(bimodPT[cur]<mid){
+               //predicted not taken
+               if(outcome == 't'){
+                    mispredictions++;
+                    //updatecounter
+                    if(bimodPT[cur]<(max-1)){
+                         bimodPT[cur] = bimodPT[cur] + 1;
+                    }
+               }
+               if(outcome == 'n'){
+                    if(bimodPT[cur]>0){
+                         bimodPT[cur] = bimodPT[cur] - 1;
+                    }
+               }
+          }
+          else if(bimodPT[cur]>=mid){
+               //predicted taken
+               if(outcome == 'n'){
+                    mispredictions++;
+                    //updatecounter
+                    if(bimodPT[cur]>0){
+                         bimodPT[cur] = bimodPT[cur] - 1;
+                    }
+               }
+               if(outcome == 't'){
+                    //updatecounter
+                    if(bimodPT[cur]<(max-1)){
+                         bimodPT[cur] = bimodPT[cur] + 1;
+                    }
+               }
+          }
+      
+              
+     }
+     else if(chooser[ccur]>=2){
+          //gshare predictor chosen
+         
+          if(PT[gcur]<mid){
+               //predicted not taken
+               if(outcome == 't'){
+                    mispredictions++;
+                    //updatecounter
+                    if(PT[gcur]<(max-1)){
+                         PT[gcur] = PT[gcur] + 1;
+                    }
+               }
+               if(outcome == 'n'){
+                    if(PT[gcur]>0){
+                         PT[gcur] = PT[gcur] - 1;
+                    }
+               }
+          }
+          else if(PT[gcur]>=mid){
+               //predicted taken
+               if(outcome == 'n'){
+                    mispredictions++;
+                    //updatecounter
+                    if(PT[gcur]>0){
+                         PT[gcur] = PT[gcur] - 1;
+                    }
+               }
+               if(outcome == 't'){
+                    //updatecounter
+                    if(PT[gcur]<(max-1)){
+                         PT[gcur] = PT[gcur] + 1;
+                    }
+               }
+          }
+           
+     }
+
+     /*     //update global hist*/
+     for(int i=(N-1);i>=0;i--){
+          gbh[i+1]=gbh[i];
+     }
+/*     //place result value in MSB*/
+     if(taken==true){
+          gbh[0]=1;
+     }
+     else if(taken==false){
+          gbh[0]=0;
+     }
+
+/*     printf(" bicorrect %d\n", bicorrect);*/
+/*     printf(" gcorrect %d\n", gcorrect);*/
+     // Update chooser
+     if(bicorrect==1){
+          if(gcorrect==1){
+               //do nothing
+          }
+          else if(gcorrect==0){
+               if(chooser[ccur]>0){
+                    chooser[ccur] = chooser[ccur] - 1;
+               }
+          }
+     }
+     else if(bicorrect==0){
+          if(gcorrect==0){
+               //do nothing
+          }
+          else if(gcorrect==1){
+               if(chooser[ccur]<3){
+                    chooser[ccur] = chooser[ccur] + 1;
+               }
+          }
+     }
+
+
 }
 
 // main execution
@@ -311,7 +484,7 @@ void main(int argc, char *argv[]){
           for(int i=0; i<gsize; i++){
                PT[i] = 4;
           }
-          int hybsize = pow(2,K);
+          hybsize = pow(2,K);
           chooser = (int *)malloc(sizeof(int)*(hybsize));
           for(int i=0;i<hybsize;i++){
                chooser[i]=1;
@@ -322,7 +495,9 @@ void main(int argc, char *argv[]){
                hybrid(branchPC, outcome, K, M1, N, M2);   
           }  
           fclose(fp);
-          
+          printf("COMMAND\n");
+          printf("./sim %s %d %d %d %d %s\n", predictor, K, M1, N, M2, trace);
+          printf("OUTPUT\n");    
      }
      else
           printf("%s is not a valid predictor type\n", predictor);
@@ -347,6 +522,20 @@ void main(int argc, char *argv[]){
           }
      }
 
+     if(strcmp("hybrid", predictor) == 0){
+          printf("FINAL CHOOSER CONTENTS\n");
+          for(int i=0;i<hybsize;i++){
+               printf("%d %d\n",i, chooser[i]);
+          }
+          printf("FINAL GSHARE CONTENTS\n");
+          for(int i=0;i<gsize;i++){
+               printf("%d %d\n",i, PT[i]);
+          }
+          printf("FINAL BIMODAL CONTENTS\n");
+          for(int i=0;i<bisize;i++){
+               printf("%d %d\n",i, bimodPT[i]);
+          }
+     }
 
 /*//not sure if necessary*/
 /*     //firstline?*/
