@@ -508,34 +508,34 @@ void main(int argc, char *argv[]){
      printf("number of mispredictions: %d\n", mispredictions);
      printf("misprediction rate: %.2f%%\n", (100*(double)mispredictions/(double)predictions));
 
-     if(strcmp("bimodal", predictor) == 0){
-          printf("FINAL BIMODAL CONTENTS\n");
-          for(int i=0;i<bisize;i++){
-               printf("%d %d\n",i, bimodPT[i]);
-          }
-     }
+/*     if(strcmp("bimodal", predictor) == 0){*/
+/*          printf("FINAL BIMODAL CONTENTS\n");*/
+/*          for(int i=0;i<bisize;i++){*/
+/*               printf("%d %d\n",i, bimodPT[i]);*/
+/*          }*/
+/*     }*/
 
-     if(strcmp("gshare", predictor) == 0){
-          printf("FINAL GSHARE CONTENTS\n");
-          for(int i=0;i<gsize;i++){
-               printf("%d %d\n",i, PT[i]);
-          }
-     }
+/*     if(strcmp("gshare", predictor) == 0){*/
+/*          printf("FINAL GSHARE CONTENTS\n");*/
+/*          for(int i=0;i<gsize;i++){*/
+/*               printf("%d %d\n",i, PT[i]);*/
+/*          }*/
+/*     }*/
 
-     if(strcmp("hybrid", predictor) == 0){
-          printf("FINAL CHOOSER CONTENTS\n");
-          for(int i=0;i<hybsize;i++){
-               printf("%d %d\n",i, chooser[i]);
-          }
-          printf("FINAL GSHARE CONTENTS\n");
-          for(int i=0;i<gsize;i++){
-               printf("%d %d\n",i, PT[i]);
-          }
-          printf("FINAL BIMODAL CONTENTS\n");
-          for(int i=0;i<bisize;i++){
-               printf("%d %d\n",i, bimodPT[i]);
-          }
-     }
+/*     if(strcmp("hybrid", predictor) == 0){*/
+/*          printf("FINAL CHOOSER CONTENTS\n");*/
+/*          for(int i=0;i<hybsize;i++){*/
+/*               printf("%d %d\n",i, chooser[i]);*/
+/*          }*/
+/*          printf("FINAL GSHARE CONTENTS\n");*/
+/*          for(int i=0;i<gsize;i++){*/
+/*               printf("%d %d\n",i, PT[i]);*/
+/*          }*/
+/*          printf("FINAL BIMODAL CONTENTS\n");*/
+/*          for(int i=0;i<bisize;i++){*/
+/*               printf("%d %d\n",i, bimodPT[i]);*/
+/*          }*/
+/*     }*/
 
 /*//not sure if necessary*/
 /*     //firstline?*/
