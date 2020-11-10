@@ -173,11 +173,6 @@ void gshare(int branchPC, char outcome, int M1, int N){
           }
      }
 
-//for testing
-/*     printf("\nbefore\n");*/
-/*     for(int i=0;i<N;i++){*/
-/*          printf("gbh of %d: %d\n", i, gbh[i]);*/
-/*     }*/
 
 /*     //update global hist*/
      //1st shift bits right one
@@ -193,12 +188,6 @@ void gshare(int branchPC, char outcome, int M1, int N){
      else if(taken==false){
           gbh[0]=0;
      }
-
-//for testing
-/*     printf("after\n");*/
-/*     for(int i=0;i<N;i++){*/
-/*          printf("gbh of %d: %d\n", i, gbh[i]);*/
-/*     }*/
 
 }
 
@@ -361,8 +350,6 @@ void hybrid(int branchPC, char outcome, int K, int M1, int N, int M2){
           gbh[0]=0;
      }
 
-/*     printf(" bicorrect %d\n", bicorrect);*/
-/*     printf(" gcorrect %d\n", gcorrect);*/
      // Update chooser
      if(bicorrect==1){
           if(gcorrect==1){
@@ -404,15 +391,8 @@ void main(int argc, char *argv[]){
      if(strcmp("smith", predictor) == 0){
           B = strtol(argv[2], NULL, 10);
           trace = argv[3];
-          //initialize counter array of size 2^10
-          //TODO JUST CAUSE IDK WHAT SIZE TO MAKE THIS ARRAY
-          //countArr = (int *)malloc(sizeof(int)*1024);
           int x = (int)(pow(2,(float)B)/2.);
           count = x;
-/*          old way assuming BHT (indexed table)*/
-/*          for(int i=0; i<1024; i++){*/
-/*               countArr[i] = x;*/
-/*          }*/
           fp = fopen(trace, "r");
           while(!feof(fp)){   
                fscanf(fp, "%x %c\n", &branchPC, &outcome);
@@ -508,43 +488,40 @@ void main(int argc, char *argv[]){
      printf("number of mispredictions: %d\n", mispredictions);
      printf("misprediction rate: %.2f%%\n", (100*(double)mispredictions/(double)predictions));
 
-/*     if(strcmp("bimodal", predictor) == 0){*/
-/*          printf("FINAL BIMODAL CONTENTS\n");*/
-/*          for(int i=0;i<bisize;i++){*/
-/*               printf("%d %d\n",i, bimodPT[i]);*/
-/*          }*/
-/*     }*/
 
-/*     if(strcmp("gshare", predictor) == 0){*/
-/*          printf("FINAL GSHARE CONTENTS\n");*/
-/*          for(int i=0;i<gsize;i++){*/
-/*               printf("%d %d\n",i, PT[i]);*/
-/*          }*/
-/*     }*/
+     if(strcmp("smith", predictor) == 0){
+          printf("FINAL COUNTER CONTENT: ");
+          printf("%d\n", count);
+     }
 
-/*     if(strcmp("hybrid", predictor) == 0){*/
-/*          printf("FINAL CHOOSER CONTENTS\n");*/
-/*          for(int i=0;i<hybsize;i++){*/
-/*               printf("%d %d\n",i, chooser[i]);*/
-/*          }*/
-/*          printf("FINAL GSHARE CONTENTS\n");*/
-/*          for(int i=0;i<gsize;i++){*/
-/*               printf("%d %d\n",i, PT[i]);*/
-/*          }*/
-/*          printf("FINAL BIMODAL CONTENTS\n");*/
-/*          for(int i=0;i<bisize;i++){*/
-/*               printf("%d %d\n",i, bimodPT[i]);*/
-/*          }*/
-/*     }*/
+     if(strcmp("bimodal", predictor) == 0){
+          printf("FINAL BIMODAL CONTENTS\n");
+          for(int i=0;i<bisize;i++){
+               printf("%d %d\n",i, bimodPT[i]);
+          }
+     }
 
-/*//not sure if necessary*/
-/*     //firstline?*/
-/*     fscanf(fp, "%c", &bom1);*/
-/*     printf("bom1 %c\n", bom1);*/
-/*     fscanf(fp, "%c", &bom2);*/
-/*     printf("bom2 %c\n", bom2);*/
-/*     fscanf(fp, "%c", &bom3);*/
-/*     printf("bom 3 %c\n", bom3);*/
+     if(strcmp("gshare", predictor) == 0){
+          printf("FINAL GSHARE CONTENTS\n");
+          for(int i=0;i<gsize;i++){
+               printf("%d %d\n",i, PT[i]);
+          }
+     }
+
+     if(strcmp("hybrid", predictor) == 0){
+          printf("FINAL CHOOSER CONTENTS\n");
+          for(int i=0;i<hybsize;i++){
+               printf("%d %d\n",i, chooser[i]);
+          }
+          printf("FINAL GSHARE CONTENTS\n");
+          for(int i=0;i<gsize;i++){
+               printf("%d %d\n",i, PT[i]);
+          }
+          printf("FINAL BIMODAL CONTENTS\n");
+          for(int i=0;i<bisize;i++){
+               printf("%d %d\n",i, bimodPT[i]);
+          }
+     }
 
 }
 
